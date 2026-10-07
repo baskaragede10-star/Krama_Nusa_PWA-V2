@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#087f4b">
+  <meta name="background-color" content="#f7fbf9">
+  <meta name="description" content="Krama Nusa — sistem pelaporan dan penanganan titik sampah.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Krama Nusa</title>
+  <style>
+    :root{--green:#087f4b;--green2:#12b56a;--bg:#edf5f1;--card:#fff;--text:#123b2c;--muted:#66756e}
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+    .shell{min-height:100vh;display:flex;flex-direction:column}
+    header{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;padding:18px 18px 14px;position:sticky;top:0;z-index:10}
+    .head{max-width:1000px;margin:auto;display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:14px;background:#fff;display:grid;place-items:center;font-size:25px}.title b{font-size:20px}.title small{display:block;opacity:.9;margin-top:2px}
+    .actions{margin-left:auto;display:flex;gap:8px}.btn{border:0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}.btn.install{background:#fff;color:var(--green)}.btn.open{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35)}
+    main{flex:1;width:100%;padding:12px}.frameWrap{max-width:1000px;margin:auto;min-height:calc(100vh - 96px);background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(17,66,46,.08)}
+    iframe{width:100%;height:calc(100vh - 108px);min-height:660px;border:0;display:block;background:#f7fbf9}
+    .status{max-width:1000px;margin:0 auto 8px;padding:0 4px;font-size:12px;color:var(--muted)}
+    .hidden{display:none!important}
+    @media(max-width:640px){header{padding:12px}.logo{width:40px;height:40px}.actions .open{display:none}.title b{font-size:18px}.frameWrap{border-radius:0;margin:0 -12px}.status{padding:0 2px}iframe{height:calc(100vh - 78px);min-height:620px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="head">
+      <div class="logo">🌱</div>
+      <div class="title"><b>Krama Nusa</b><small id="subtitle">Jaga lingkungan bersama</small></div>
+      <div class="actions">
+        <button id="installBtn" class="btn install hidden">📲 Pasang Aplikasi</button>
+        <button id="openBtn" class="btn open">↗ Buka Penuh</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="status" id="status">Aplikasi Krama Nusa</div>
+    <div class="frameWrap"><iframe id="appFrame" allow="geolocation; camera; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+  </main>
+</div>
+<script>
+(function(){
+  'use strict';
+  var WEBAPP='https://script.google.com/macros/s/AKfycbxJ1PMrz3gJpsHdzbNfSS6sE-EOFehOHzZrv4mR6Y5g13AY_a8FpqDYWwPWSjbEUVGs/exec';
+  var params=new URLSearchParams(location.search);
+  var role=(params.get('role')||'public').toLowerCase();
+  var target=WEBAPP;
+  var label='Masyarakat';
+  if(role==='petugas'){target=WEBAPP+'?page=petugas';label='Petugas';}
+  if(role==='admin'){target=WEBAPP+'?page=admin';label='Admin';}
+  var frame=document.getElementById('appFrame');
+  var status=document.getElementById('status');
+  var subtitle=document.getElementById('subtitle');
+  var installBtn=document.getElementById('installBtn');
+  document.title='Krama Nusa — '+label;
+  subtitle.textContent=label==='Masyarakat'?'Jaga lingkungan bersama':label+' Krama Nusa';
+  status.textContent='Mode '+label+' • koneksi langsung ke Krama Nusa';
+  frame.src=target;
+  document.getElementById('openBtn').onclick=function(){window.open(target,'_blank','noopener');};
+
+  var deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault(); deferredPrompt=e; installBtn.classList.remove('hidden');
+  });
+  installBtn.addEventListener('click',async function(){
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    try{await deferredPrompt.userChoice;}catch(e){}
+    deferredPrompt=null; installBtn.classList.add('hidden');
+  });
+  window.addEventListener('appinstalled',function(){installBtn.classList.add('hidden');});
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(err){console.warn('SW',err);});});
+  }
+})();
+</script>
+</body>
+</html>
